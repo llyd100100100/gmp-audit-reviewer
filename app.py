@@ -333,15 +333,47 @@ if uploaded_file:
 
     try:
         if ext == "csv":
-            df = pd.read_csv(uploaded_file, encoding="utf-8-sig")
+            # Try multiple encodings
+            encodings_to_try = ["utf-8-sig", "cp949", "euc-kr", "latin1"]
+            df = None
+            for enc in encodings_to_try:
+                try:
+                    df = pd.read_csv(uploaded_file, encoding=enc)
+                    break
+                except UnicodeDecodeError:
+                    uploaded_file.seek(0)
+                    continue
+            if df is None:
+                raise ValueError("지원되는 인코딩으로 CSV 파일을 읽을 수 없습니다.")
             raw_text = df.to_csv(index=False)
 
         elif ext in ("xlsx", "xls"):
-            df = pd.read_excel(uploaded_file)
+            try:
+                # pandas usually uses openpyxl for xlsx and xlrd for xls implicitly if installed
+                df = pd.read_excel(uploaded_file)
+            except Exception as e:
+                if "engine" in str(e).lower() or ext == "xls":
+                    # Fallback for old .xls files or generic errors
+                    uploaded_file.seek(0)
+                    try:
+                        import xlrd
+                        df = pd.read_excel(uploaded_file, engine="xlrd")
+                    except ImportError:
+                        df = pd.read_html(uploaded_file)[0] # Sometimes systems export HTML as .xls
             raw_text = df.to_csv(index=False)
 
         elif ext == "txt":
-            content = uploaded_file.read().decode("utf-8-sig", errors="replace")
+            content_bytes = uploaded_file.read()
+            content = None
+            for enc in ["utf-8-sig", "cp949", "euc-kr", "latin1"]:
+                try:
+                    content = content_bytes.decode(enc)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            if content is None:
+                content = content_bytes.decode("utf-8-sig", errors="replace")
+                
             df = pd.DataFrame({"Raw Text": content.splitlines()})
             raw_text = content
 
@@ -370,10 +402,8 @@ if st.session_state.uploaded_df is not None:
     df = st.session_state.uploaded_df
     total_rows = len(df)
 
-    with st.expander(f"📋 데이터 프리뷰 ({total_rows:,} rows)", expanded=True):
-        st.dataframe(df.head(100), use_container_width=True, height=280)
-        if total_rows > 100:
-            st.caption(f"상위 100행 표시 중 (전체 {total_rows:,}행)")
+    with st.expander(f"📋 데이터 프리뷰 (전체 {total_rows:,} rows)", expanded=True):
+        st.dataframe(df, use_container_width=True, height=400)
 
     # Timestamp column detection
     ts_cols = [c for c in df.columns if any(k in c.lower() for k in ["time", "date", "ts", "timestamp"])]

@@ -110,7 +110,7 @@ Return ONLY a valid JSON object with the following schema:
       "alcoa_item": "<ALCOA+ category>",
       "severity": "<Critical | Major | Minor | Observation>",
       "description": "<clear description of the finding in Korean>",
-      "evidence": "<specific record(s) or field(s) from the data as evidence>",
+      "evidence": "<ALL specific record(s), timestamps, or field(s) from the data that serve as evidence. If there are multiple related records, cite ALL of them.>",
       "recommendation": "<corrective action recommendation in Korean>"
     }}
   ],
@@ -130,7 +130,8 @@ Return ONLY a valid JSON object with the following schema:
 - If data is insufficient to evaluate an ALCOA item, score it 7 and note it in findings as Observation.
 
 ### Important
-- Be precise. Reference actual field values, timestamps, user IDs from the data as evidence.
+- Be precise and COMPREHENSIVE. Reference actual field values, timestamps, and user IDs.
+- **CRITICAL**: If a finding is based on multiple log entries (e.g., a trend of missing signatures, or multiple conflicting timestamps), you MUST list ALL related lines / records in the "evidence" field. Do not just cite the first one.
 - Do NOT hallucinate findings that are not supported by the data.
 - If the data looks clean for a given ALCOA category, score it 9-10 and skip that category in findings.
 - Output ONLY the raw JSON. No extra text, no markdown code fences.

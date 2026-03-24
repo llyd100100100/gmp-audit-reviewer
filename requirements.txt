@@ -1,0 +1,10 @@
+streamlit
+pandas
+google-genai
+python-dotenv
+tenacity
+google-api-core
+supabase
+openpyxl
+pypdf
+tabulate

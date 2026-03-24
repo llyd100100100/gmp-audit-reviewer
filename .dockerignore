@@ -1,0 +1,9 @@
+.env
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
+.git/
+.github/
+README.md
+task.md
+implementation_plan.md
